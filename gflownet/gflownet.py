@@ -1268,7 +1268,8 @@ class GFlowNetAgent:
             if indices_accept.numel() == 0:
                 continue
             n_remaining = n_samples - len(samples_final)
-            indices_accept = indices_accept[-n_remaining:]
+            n_accept = min(n_remaining, indices_accept.numel())
+            indices_accept = indices_accept[-n_accept:]
             if isinstance(samples_uniform, torch.Tensor):
                 samples_final.extend(
                     samples_uniform[indices_accept.to(samples_uniform.device)].tolist()

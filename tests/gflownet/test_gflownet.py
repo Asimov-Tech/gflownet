@@ -237,7 +237,7 @@ def test__logprobs_validity(
             assert val
 
 
-def test__sample_from_reward__uses_tensor_accept_indices(monkeypatch):
+def test_sample_from_reward_uses_tensor_accept_indices(monkeypatch):
     class DummyEnv:
         @staticmethod
         def get_uniform_terminating_states(n_samples):
@@ -258,7 +258,7 @@ def test__sample_from_reward__uses_tensor_accept_indices(monkeypatch):
             return values
 
         @staticmethod
-        def __call__(_):
+        def __call__(states):
             return torch.tensor([0.0, 0.0, 5.0, 0.0])
 
     def _fake_rand(*args, **kwargs):
