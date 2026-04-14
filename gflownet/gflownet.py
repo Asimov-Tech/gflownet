@@ -1257,17 +1257,26 @@ class GFlowNetAgent:
             rewards = self.proxy.proxy2reward(
                 self.proxy(self.env.states2proxy(samples_uniform))
             )
-            indices_accept = (
+            indices_accept = torch.nonzero(
                 (
                     torch.rand(n_samples, dtype=self.float, device=self.device)
                     * (max_reward + epsilon)
                     < rewards
+                ).flatten(),
+                as_tuple=False,
+            ).flatten()
+            if indices_accept.numel() == 0:
+                continue
+            n_remaining = n_samples - len(samples_final)
+            indices_accept = indices_accept[-n_remaining:]
+            if isinstance(samples_uniform, torch.Tensor):
+                samples_final.extend(
+                    samples_uniform[indices_accept.to(samples_uniform.device)].tolist()
                 )
-                .flatten()
-                .tolist()
-            )
-            samples_accepted = [samples_uniform[idx] for idx in indices_accept]
-            samples_final.extend(samples_accepted[-(n_samples - len(samples_final)) :])
+            else:
+                samples_final.extend(
+                    [samples_uniform[idx] for idx in indices_accept.tolist()]
+                )
         return samples_final
 
     def load_checkpoint(self, checkpoint: dict):
