@@ -404,7 +404,9 @@ class GFlowNetAgent:
                     list(actions_rev), device=self.device, float_type=self.float
                 )
                 is_rev = torch.tensor(
-                    np.array(indices_rev) != None, dtype=torch.bool, device=self.device
+                    [idx is not None for idx in indices_rev],
+                    dtype=torch.bool,
+                    device=self.device,
                 )
                 mask_invalid_actions_rev = self._get_masks(
                     envs, batch, env_cond, not backward, backward
