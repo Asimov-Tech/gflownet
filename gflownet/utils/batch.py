@@ -1324,9 +1324,12 @@ class Batch:
         elif isinstance(self.states, list):
             states_term = [self.states[idx] for idx in indices if self.done[idx]]
             if self.conditional and (policy is True or proxy is True):
-                done = np.array(self.done, dtype=bool)[indices]
-                traj_indices = np.array(self.traj_indices)[indices][done]
-                assert len(traj_indices) == len(np.unique(traj_indices))
+                indices_t = torch.from_numpy(indices)
+                done = torch.tensor(self.done, dtype=torch.bool)[indices_t]
+                traj_indices = torch.tensor(self.traj_indices, dtype=torch.long)[
+                    indices_t
+                ][done].tolist()
+                assert len(traj_indices) == len(set(traj_indices))
         else:
             raise NotImplementedError("self.states can only be list or torch.tensor")
         if policy is True:
@@ -1597,7 +1600,7 @@ class Batch:
             return False
         if len(self.state_indices) != len(self):
             return False
-        if set(np.unique(self.traj_indices)) != set(self.envs.keys()):
+        if set(self.traj_indices) != set(self.envs.keys()):
             return False
         if set(self.trajectories.keys()) != set(self.envs.keys()):
             return False
@@ -1606,7 +1609,7 @@ class Batch:
         ]
         if len(batch_indices) != len(self):
             return False
-        if len(np.unique(batch_indices)) != len(batch_indices):
+        if len(set(batch_indices)) != len(batch_indices):
             return False
         return True
 

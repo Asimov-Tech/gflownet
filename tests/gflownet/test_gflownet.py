@@ -4,6 +4,7 @@ import pytest
 import torch
 from utils_for_tests import ch_tmpdir, load_base_test_config
 
+from gflownet.gflownet import GFlowNetAgent
 from gflownet.utils.batch import compute_logprobs_trajectories
 from gflownet.utils.common import gflownet_from_config, tfloat
 
@@ -234,3 +235,47 @@ def test__logprobs_validity(
         if act == gfn.env.eos:
             assert lp == 0.0
             assert val
+
+
+def test_sample_from_reward_uses_tensor_accept_indices(monkeypatch):
+    class DummyEnv:
+        @staticmethod
+        def get_uniform_terminating_states(n_samples):
+            assert n_samples == 4
+            return [[10], [20], [30], [40]]
+
+        @staticmethod
+        def states2proxy(states):
+            return states
+
+    class DummyProxy:
+        @staticmethod
+        def get_max_reward():
+            return 5.0
+
+        @staticmethod
+        def proxy2reward(values):
+            return values
+
+        @staticmethod
+        def __call__(states):
+            return torch.tensor([0.0, 0.0, 5.0, 0.0])
+
+    def _fake_rand(*args, **kwargs):
+        return torch.tensor([0.9, 0.9, 0.1, 0.9])
+
+    dummy_gfn = type(
+        "DummyGFN",
+        (),
+        {
+            "env": DummyEnv(),
+            "proxy": DummyProxy(),
+            "float": torch.float32,
+            "device": "cpu",
+        },
+    )()
+    monkeypatch.setattr(torch, "rand", _fake_rand)
+
+    samples = GFlowNetAgent.sample_from_reward(dummy_gfn, n_samples=4)
+
+    assert samples == [[30], [30], [30], [30]]
